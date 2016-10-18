@@ -70,18 +70,17 @@ namespace cppure
 
 			char c = str[idx];
 
-			// Is this character a space or punctuation or are we at eof?
-			bool iss = isspace(c);
-			bool isp = ispunct(c);
+			// Only check non-unicode values
+			bool word_char = !isspace(c) && !ispunct(c) && static_cast<unsigned char>(c) < 128;
 
 			// Still waiting for start of word...
-			if (iss && (st == WaitForWord)) {
+			if (!word_char && (st == WaitForWord)) {
 				ret += c;
 				continue;
 			}
 
 			// Starting a word!
-			if (!iss && (st == WaitForWord)) {
+			if (word_char && (st == WaitForWord)) {
 				st = ProcessingWord;
 				possible = all_possible;
 			}
@@ -95,7 +94,7 @@ namespace cppure
 					buf += c;
 
 					// We can clear out the buffer and start over
-					if (iss || isp) {
+					if (!word_char) {
 						ret += buf;
 						buf.clear();
 						st = WaitForWord;
@@ -104,8 +103,8 @@ namespace cppure
 					continue;
 				}
 
-				// We've encountered a new space, punctuation, or eof character, so we process this word
-				if (iss || isp) {
+				// We've encountered a non-word character, so we process this word
+				if (!word_char) {
 
 					// We match a possible word, so replace our buffer
 					if (icase_match_any(buf, possible) >= 0) {

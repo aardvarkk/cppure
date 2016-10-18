@@ -33,25 +33,26 @@ namespace cppure
 		return true;
 	}
 
-	bool icase_match(string const& buf, set<int> const& possible) {
-		// We can process the remainder of the buffer now (the last word)
-		for (int i : possible) {
-			// Must be same length
-			if (buf.size() != wordlist[i].size()) continue;
+	bool icase_match(string const& a, string const& b) {
+		// Must be same length
+		if (a.size() != b.size()) return false;
 
-			// Check for full match between buffer and wordlist possibility
-			bool match = true;
-			for (int j = 0; j < buf.size(); ++j) {
-				if (tolower(buf[j]) != tolower(wordlist[i][j])) {
-					match = false;
-					break;
-				}
+		// Check for full match between a and b in 'lowercase' sense
+		for (int j = 0; j < a.size(); ++j) {
+			if (tolower(a[j]) != tolower(b[j])) {
+				return false;
 			}
-
-			if (match) return true;
 		}
 
-		return false;
+		return true;
+	}
+
+	int icase_match_any(string const& buf, set<int> const& possible) {
+		// We can process the remainder of the buffer now (the last word)
+		for (int i : possible) {
+			if (icase_match(buf, wordlist[i])) return i;
+		}
+		return -1;
 	}
 
 	string cleanse(string const& str)
@@ -107,7 +108,7 @@ namespace cppure
 				if (iss || isp) {
 
 					// We match a possible word, so replace our buffer
-					if (icase_match(buf, possible)) {
+					if (icase_match_any(buf, possible) >= 0) {
 						fill(buf.begin(), buf.end(), '*');
 					}
 
@@ -121,7 +122,7 @@ namespace cppure
 				// Don't yet have a match, so add the character
 				buf += c;
 
-				// Filter remaining possibilities
+				// Filter remaining possibilities based on current character
 				for (auto it = possible.begin(); it != possible.end();) {
 					// Current string is too long for match
 					if (wordlist[*it].size() < buf.size()) {
@@ -142,7 +143,7 @@ namespace cppure
 		}
 
 		// Process the last word
-		if (icase_match(buf, possible)) {
+		if (icase_match_any(buf, possible) >= 0) {
 			fill(buf.begin(), buf.end(), '*');
 		}
 
